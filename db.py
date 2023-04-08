@@ -23,9 +23,13 @@ class Database:
     def insert_user(self, data):
         c = self.conn.cursor()
         query = f"""insert into user (nickname, location) 
-            values ('{data['nickname']}','{data['location']});"""
+            values ('{data['nickname']}',{data['location']});"""
         c.execute(query)
+
+        query = f"select id from user where location={data['location']};"
+        idx = c.execute(query).fetchone()
         c.close()
+        return idx[0]
 
     def insert_rally(self, data):
         c = self.conn.cursor()
@@ -35,21 +39,26 @@ class Database:
         c.close()
 
     def data_extract(self):
-        c = self.conn.cursor()
-        query = """select c.nickname, count(c.id) from
+        query = """select c.nickname, count(c.id) as bf_count from
             (select a.id, b.nickname from timeline a
                 left join user b
                 on a.user_id = b.id) c
                 group by c.nickname;"""
-        df = pd.read_sql_query(query, c)
-        c.close()
+        df = pd.read_sql_query(query, self.conn)
         return df
     
     def timeline_extract(self):
-        c = self.conn.cursor()
         query = """select b.nickname, a.timestamp, a.bf_loc from timeline a
             left join user b
             on a.user_id = b.id;"""
-        df = pd.read_sql_query(query, c)
-        c.close()
+        df = pd.read_sql_query(query, self.conn)
         return df
+    
+    def user_check(self, location):
+        c = self.conn.cursor()
+        query = f"select * from user where location={location};"
+        temp = c.execute(query).fetchall()
+        if len(temp)==0:
+            return False
+        else:
+            return True

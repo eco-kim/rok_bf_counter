@@ -12,6 +12,8 @@ from loc_extract import *
 import pickle
 import subprocess
 from PIL import Image
+from db import Database
+from PyQt5.QtTest import QTest
 
 # adb settings
 client = AdbClient(host="127.0.0.1", port=5037)
@@ -48,15 +50,18 @@ def range_click(pos):
     adbdevice.shell(cmd)
 
 def bias_sleep(low, range0):
-    dt = np.random.rand()*range0
-    time.sleep(low + dt)
+    dt = int(np.random.rand()*range0*1000)
+    t0 = int(low*1000)
+    QTest.qWait(t0+dt)
+#    time.sleep(low + dt)
 
 def go_to_war_page():
-    temp = auto.locateOnScreen('./src/aliance_1200.png',confidence=0.9)
+    back = background_screenshot()
+    temp = auto.locate(f'{basedir}src/aliance_1200.png', back, confidence=0.8)
     print(temp)
     if not temp:
         range_click('menu')
-        bias_sleep(0.5,0.2)
+        bias_sleep(0.3,0.2)
     range_click('aliance')
     bias_sleep(0.5,0.2)
     range_click('wars')
@@ -64,7 +69,7 @@ def go_to_war_page():
 
 def bf_check():
     back = background_screenshot()
-    temp = auto.locate('./src/bf_1200.png', Image.fromarray(back), confidence=0.95)
+    temp = auto.locate(f'{basedir}src/bf_1200.png', Image.fromarray(back), confidence=0.95)
     if temp is None:
         return False
     else:
@@ -72,7 +77,7 @@ def bf_check():
 
 def rallycount():
     back = background_screenshot()
-    temp = auto.locateAll('./src/bf_1200.png', Image.fromarray(back), confidence=0.95)
+    temp = auto.locateAll(f'{basedir}src/bf_1200.png', Image.fromarray(back), confidence=0.95)
     if temp is None:
         return False
     temp = list(temp)
@@ -85,27 +90,45 @@ def loc_capture(i):
     bf_loc = im[y:y+h,x+796:x+796+w] ##야도좌표가 성좌표+796에있음, 해상도 바뀔때 확장성떨어짐 나중에 수정
     return Image.fromarray(castle_loc), Image.fromarray(bf_loc)
 
-def get_nickname():
+def get_nickname(nn):
+    range_click(f'loc{nn}')
+    bias_sleep(2.5,0.5)
+    range_click('castle')
+    bias_sleep(0.5,0.2)
     back = background_screenshot()
-    temp = auto.locate('./src/nick_1200.png', Image.fromarray(back), confidence=0.95)
+    temp = auto.locate(f'{basedir}src/info_1200.png', Image.fromarray(back), confidence=0.9)
+    if not temp:
+        dx = 190
+        dy = 140
+        pos0 = positions['castle']
+        cc = 0
+        for i in [-1,0,1]:
+            for j in [-1,0,1]:
+                pos = (pos0[0]+dx*i, pos0[1]+dy*j, pos0[2], pos0[3])
+                range_click(pos)
+                bias_sleep(0.3,0.2)
+                back = background_screenshot()
+                temp = auto.locate(f'{basedir}src/info_1200.png', Image.fromarray(back), confidence=0.9)
+                if temp is not None:
+                    cc = 1
+                    break
+            if cc==1:
+                break
+
+    pos = (temp[0]-78, temp[1]-229,20,20)
+    range_click(pos)
+    bias_sleep(0.7,0.2)
+    back = background_screenshot()
+    temp = auto.locate(f'{basedir}src/nick_1200.png', Image.fromarray(back), confidence=0.95)
     range_click(tuple(temp))
     nickname = clip.paste()
+    range_click('info_x')
+    bias_sleep(0.5,0.2)
     return nickname
     
-def data_load():
-    try:
-        with open('./data/users','rb') as f:
-            user = pickle.loads(f)
-    except:
-        user = pd.DataFrame(columns=['id','nickname','location'])
-    
-    try:
-        with open('./data/timeline','rb') as f:
-            timeline = pickle.loads(f)
-    except:
-        timeline = pd.DataFrame(columns=['id','user_id','bf_loc','timestamp'])
-
-    return user, timeline
+def integer_timestamp():
+    t0 = datetime.now().timestamp()
+    return int(t0)
 
 if adbdevice is not None:
     print("Adb detected")
@@ -113,38 +136,31 @@ else:
     print("Adb not detected")
     exit(0)
 
-if __name__=='__main__':
-    ##df들 불러오기 or 만들기
-    user, timeline = data_load()
-
-    #전쟁 페이지로 가기
-    go_to_war_page()
-    
-    #야도집결 걸릴때까지 대기 (3초마다 체크, 야간에는 한 10초로 늘려야할듯.)
-    cc = bf_check()
-    while not cc:
-        time.sleep(3)
-        cc = bf_check()
-    
+def bf_count(db, rally=0, castle=None, bf=None):
     nn = rallycount()
-    castle_loc, bf_loc = loc_capture(nn)
-    loc = extract(castle_loc)
+   
+    if rally==0: #집결이 없었다가 생긴 경우
+        castle_loc_im, bf_loc_im = loc_capture(nn)
+        castle_loc = extract(castle_loc_im)
+        i = nn
+    else:
+        for i in range(nn,0,-1):
+            castle_loc_im, bf_loc_im = loc_capture(i)
+            castle_loc = extract(castle_loc_im)
+            if castle_loc != castle:
+                break
 
-    if loc not in user.location.values:
-        range_click(f'loc{nn}')
-        bias_sleep(2.5,0.5)
-        range_click('castle')
-        bias_sleep(0.5,0.2)
-        range_click('info')
-        bias_sleep(0.7,0.2)
-        nickname = get_nickname()
-        user_id = user.shape[0]+1
-        data = pd.DataFrame([[user_id,nickname,loc]], columns=user.columns)
-        user = pd.concat([user,data],ignore_index=True)
+    nickname = get_nickname(i)
+    data = {'nickname':nickname, 'location':castle_loc}
+    user_id = db.insert_user(data)
 
-        bf_loc = extract(bf_loc)
-        idx = timeline.shape[0]+1
-        data = pd.DataFrame([[idx,user_id,bf_loc, datetime.now()]], columns=timeline.columns)
-        timeline = pd.concat([timeline, data], ignore_index=True)
-        print(timeline.head())
+    bf_loc = extract(bf_loc_im)
+    data = {'user_id':user_id, 'bf_loc':bf_loc, 'timestamp':integer_timestamp()}
+    db.insert_rally(data)
 
+    return castle_loc, bf_loc
+#    elif rally==1:
+        
+
+if __name__=='__main__':
+    bf_count(Database())
