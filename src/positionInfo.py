@@ -9,7 +9,8 @@ def position(): #res : 해상도 tuple // ex : (1280,720) (960, 540)
             'loc3':(192,594,100,17),
             'castle':(592,328,108,71),
             'info':(735,232,20,20),
-            'nickname':(636,249,617,261)}
+            'nickname':(636,249,617,261),
+            'info_x':(1078,70,20,20)}
     return pos
 
 def sc_region():
