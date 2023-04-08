@@ -1,10 +1,8 @@
 import pyperclip as clip
 import pyautogui as auto
 import numpy as np
-import time
 from datetime import datetime
 from src.positionInfo import *
-from window_setup import bluestackWindow
 from ppadb.client import Client as AdbClient
 from config import *
 from loc_extract import *
@@ -22,11 +20,6 @@ def adb_device(deviceport):
     else:
         print("Adb not detected")
     return adbdevice
-
-#b_window = bluestackWindow()
-#b_window.windowFind()
-#b_window.win.activate()
-#time.sleep(1)
 
 def background_screenshot(adb):
     image_bytes = adb.screencap()
@@ -69,15 +62,14 @@ def bf_check(adb):
     else:
         return True
 
-def location_check(adb, castle_list, bf_list):
-    nn = rallycount()
+def location_check(adb, bf_list):
+    nn = rallycount(adb)
     cc = 0
     back = background_screenshot(adb)
     for i in range(nn,0,-1):
-        castle_loc_im, bf_loc_im = loc_capture(back, i)
-        castle_loc = extract(castle_loc_im)
+        _, bf_loc_im = loc_capture(back, i)
         bf_loc = extract(bf_loc_im)
-        if castle_loc not in castle_list and bf_loc not in bf_list:
+        if bf_loc not in bf_list:
             cc = 1
             break
     if cc == 0:
@@ -129,10 +121,8 @@ def get_nickname(adb, nn):
     back = background_screenshot(adb)
     temp = auto.locate(f'{basedir}src/nick_1200.png', Image.fromarray(back), confidence=0.95)
     range_click(adb, tuple(temp))
-    try:
-        nickname = clip.waitForNewPaste(1)
-    except:
-        return 'error'
+    bias_sleep(0.5,0.2)
+    nickname = clip.paste()
     range_click(adb, 'info_x')
     bias_sleep(0.5,0.2)
     return nickname

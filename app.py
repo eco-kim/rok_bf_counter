@@ -11,7 +11,6 @@ class MyApp(QWidget):
         self.initUI()
         self.db = Database()
         self.bot = 0
-        self.castle_list = []
         self.bf_list = []
         self.adb_port = None
         #self.wait = QEventLoop()
@@ -84,25 +83,21 @@ class MyApp(QWidget):
             if rally==0: ##집결이 없었다가 생김, 혹은 처음 켰음
                 nn = rallycount(self.adb) #집결 열려있는 것 개수
                 castle_loc, bf_loc = bf_count(self.adb, self.db, nn)
-                self.castle_list.append(castle_loc)
                 self.bf_list.append(bf_loc)
                 rally = 1
             else: ##전에 어디 한번 다녀옴
-                i = location_check(self.adb, self.castle_list, self.bf_list)
+                i = location_check(self.adb, self.bf_list)
                 while not i and self.bot==1: ##다른 좌표가 없는 경우 3초마다 확인하면서 기다림
                     QTest.qWait(3000)
-                    i = location_check(self.adb, self.castle_list, self.bf_list)
+                    i = location_check(self.adb,  self.bf_list)
                     QApplication.processEvents()
                 if self.bot==0: #멈춤버튼 누름
                     break
                 castle_loc, bf_loc = bf_count(self.adb, self.db, i)
-                self.castle_list.append(castle_loc)
                 self.bf_list.append(bf_loc)
-                rally = 1
-            if len(self.castle_list)>3:
-                self.castle_list = self.castle_list[-3:]                 
-            if len(self.bf_list)>3:
-                self.bf_list = self.bf_list[-3:]            
+                rally = 1             
+            if len(self.bf_list)>10:
+                self.bf_list = self.bf_list[-10:]            
             QApplication.processEvents()       
     
     def bot_stop(self):
