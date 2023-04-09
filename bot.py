@@ -45,7 +45,7 @@ def bias_sleep(low, range0):
 
 def go_to_war_page(adb):
     back = background_screenshot(adb)
-    temp = auto.locate(f'{basedir}src/aliance_1200.png', back, confidence=0.8)
+    temp = auto.locate('./src/aliance_1200.png', back, confidence=0.8)
     if not temp:
         range_click(adb, 'menu')
         bias_sleep(0.3,0.2)
@@ -56,7 +56,7 @@ def go_to_war_page(adb):
 
 def bf_check(adb):
     back = background_screenshot(adb)
-    temp = auto.locate(f'{basedir}src/bf_1200.png', Image.fromarray(back), confidence=0.95)
+    temp = auto.locate('./src/bf_1200.png', Image.fromarray(back), confidence=0.95)
     if temp is None:
         return False
     else:
@@ -78,7 +78,7 @@ def location_check(adb, bf_list):
 
 def rallycount(adb):
     back = background_screenshot(adb)
-    temp = auto.locateAll(f'{basedir}src/bf_1200.png', Image.fromarray(back), confidence=0.95)
+    temp = auto.locateAll('./src/bf_1200.png', Image.fromarray(back), confidence=0.95)
     if temp is None:
         return False
     temp = list(temp)
@@ -96,7 +96,7 @@ def get_nickname(adb, nn):
     range_click(adb, 'castle')
     bias_sleep(0.5,0.2)
     back = background_screenshot(adb)
-    temp = auto.locate(f'{basedir}src/info_1200.png', Image.fromarray(back), confidence=0.9)
+    temp = auto.locate('./src/info_1200.png', Image.fromarray(back), confidence=0.9)
     if not temp:
         dx = 190
         dy = 140
@@ -108,7 +108,7 @@ def get_nickname(adb, nn):
                 range_click(adb, pos)
                 bias_sleep(0.3,0.2)
                 back = background_screenshot(adb)
-                temp = auto.locate(f'{basedir}src/info_1200.png', Image.fromarray(back), confidence=0.9)
+                temp = auto.locate('./src/info_1200.png', Image.fromarray(back), confidence=0.9)
                 if temp is not None:
                     cc = 1
                     break
@@ -119,7 +119,7 @@ def get_nickname(adb, nn):
     range_click(adb, pos)
     bias_sleep(0.7,0.2)
     back = background_screenshot(adb)
-    temp = auto.locate(f'{basedir}src/nick_1200.png', Image.fromarray(back), confidence=0.95)
+    temp = auto.locate('./src/nick_1200.png', Image.fromarray(back), confidence=0.95)
     range_click(adb, tuple(temp))
     bias_sleep(0.5,0.2)
     nickname = clip.paste()

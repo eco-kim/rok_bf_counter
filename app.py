@@ -4,6 +4,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtTest import QTest
 from bot import bf_count, bf_check, go_to_war_page, rallycount, location_check, adb_device
 from db import Database
+import os
 
 class MyApp(QWidget):
     def __init__(self):
@@ -13,8 +14,6 @@ class MyApp(QWidget):
         self.bot = 0
         self.bf_list = []
         self.adb_port = None
-        #self.wait = QEventLoop()
-        #self.wait.exec() ##시작 안하고 그냥 측정기 창 껐을때 이벤트루프 빠져나가는 코드 짜야함
 
     def initUI(self):        
         self.lbl1 = QLabel('ADB port:')
@@ -124,6 +123,10 @@ class MyApp(QWidget):
 
 
 if __name__ == '__main__':
+    try:
+        os.chdir(sys._MEIPASS)
+    except:
+        os.chdir(os.getcwd())
     app = QApplication(sys.argv)
     ex = MyApp()
     sys.exit(app.exec_())
