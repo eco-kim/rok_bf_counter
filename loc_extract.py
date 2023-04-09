@@ -1,6 +1,7 @@
 import cv2
 import pytesseract
 import re
+from datetime import datetime
 
 def transform(im):
     im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
@@ -10,4 +11,9 @@ def transform(im):
 def extract(im):
     text = pytesseract.image_to_string(im, lang='eng',config='--psm 6')
     loc = list(map(int, re.findall(r'[0-9]+', text)))
-    return loc[0]*10000+loc[1]
+    try:
+        location = loc[0]*10000+loc[1]
+    except:
+        location = int(datetime.now().timestamp())
+        im.save(f'error_{location}.png')
+    return location

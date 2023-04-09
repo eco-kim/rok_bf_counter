@@ -2,7 +2,7 @@ import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog
 from PyQt5.QtGui import QIcon
 from PyQt5.QtTest import QTest
-from bot import bf_count, bf_check, go_to_war_page, rallycount, location_check, adb_device
+from bot import bf_count, bf_check, go_to_war_page, rallycount, location_check, adb_device, background_screenshot
 from db import Database
 import os
 
@@ -14,6 +14,7 @@ class MyApp(QWidget):
         self.bot = 0
         self.bf_list = []
         self.adb_port = None
+        self.back = None
 
     def initUI(self):        
         self.lbl1 = QLabel('ADB port:')
@@ -69,30 +70,38 @@ class MyApp(QWidget):
         rally = 0
         while self.bot==1:
             go_to_war_page(self.adb)
-            cc = bf_check(self.adb) #집결 있는지 확인
+            self.back = background_screenshot(self.adb)
+            cc = bf_check(self.back) #집결 있는지 확인
             if not cc:
                 rally = 0 #집결이 없었음
             while not cc and self.bot==1: #집결 생길때까지 기다림
                 QTest.qWait(3000)
-                cc = bf_check(self.adb)
+                self.back = background_screenshot(self.adb)
+                cc = bf_check(self.back)
                 QApplication.processEvents()
             if self.bot==0: #멈춤버튼 누름
                 break
-
+            
             if rally==0: ##집결이 없었다가 생김, 혹은 처음 켰음
-                nn = rallycount(self.adb) #집결 열려있는 것 개수
-                castle_loc, bf_loc = bf_count(self.adb, self.db, nn)
+                nn = rallycount(self.back) #집결 열려있는 것 개수
+                _, bf_loc = bf_count(self.adb, self.db, self.back, nn)
                 self.bf_list.append(bf_loc)
                 rally = 1
             else: ##전에 어디 한번 다녀옴
-                i = location_check(self.adb, self.bf_list)
-                while not i and self.bot==1: ##다른 좌표가 없는 경우 3초마다 확인하면서 기다림
+                i = location_check(self.back, self.bf_list)
+                while i == -1 and self.bot==1: ##다른 좌표가 없는 경우 3초마다 확인하면서 기다림
                     QTest.qWait(3000)
-                    i = location_check(self.adb,  self.bf_list)
+                    self.back = background_screenshot(self.adb)
+                    i = location_check(self.back, self.bf_list)
+                    if i == 0: #집결이 다 없어짐
+                        rally = 0
+                        break
                     QApplication.processEvents()
+                if rally == 0:
+                    continue
                 if self.bot==0: #멈춤버튼 누름
                     break
-                castle_loc, bf_loc = bf_count(self.adb, self.db, i)
+                _, bf_loc = bf_count(self.adb, self.db, self.back, i)
                 self.bf_list.append(bf_loc)
                 rally = 1             
             if len(self.bf_list)>10:

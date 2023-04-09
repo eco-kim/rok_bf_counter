@@ -23,8 +23,7 @@ def adb_device(deviceport):
 
 def background_screenshot(adb):
     image_bytes = adb.screencap()
-    image = cv2.imdecode(np.frombuffer(image_bytes, np.uint8), cv2.IMREAD_COLOR)[:,:,::-1]
-    
+    image = cv2.imdecode(np.frombuffer(image_bytes, np.uint8), cv2.IMREAD_COLOR)[:,:,::-1]    
     return image
 
 def range_click(adb, pos):
@@ -54,18 +53,25 @@ def go_to_war_page(adb):
     range_click(adb, 'wars')
     bias_sleep(1,0.2)
 
-def bf_check(adb):
-    back = background_screenshot(adb)
+def bf_check(back):
     temp = auto.locate('./src/bf_1200.png', Image.fromarray(back), confidence=0.95)
     if temp is None:
         return False
     else:
         return True
 
-def location_check(adb, bf_list):
-    nn = rallycount(adb)
+def rallycount(back):
+    temp = auto.locateAll('./src/bf_1200.png', Image.fromarray(back), confidence=0.95)
+    if temp is None:
+        return 0
+    temp = list(temp)
+    return min(len(temp),3)
+
+def location_check(back, bf_list):
+    nn = rallycount(back)
+    if nn == 0:
+        return 0
     cc = 0
-    back = background_screenshot(adb)
     for i in range(nn,0,-1):
         _, bf_loc_im = loc_capture(back, i)
         bf_loc = extract(bf_loc_im)
@@ -73,16 +79,8 @@ def location_check(adb, bf_list):
             cc = 1
             break
     if cc == 0:
-        return False
+        return -1
     return i
-
-def rallycount(adb):
-    back = background_screenshot(adb)
-    temp = auto.locateAll('./src/bf_1200.png', Image.fromarray(back), confidence=0.95)
-    if temp is None:
-        return False
-    temp = list(temp)
-    return len(temp)
 
 def loc_capture(back, i):
     x,y,w,h = positions[f'loc{i}']
@@ -131,8 +129,7 @@ def integer_timestamp():
     t0 = datetime.now().timestamp()
     return int(t0)
 
-def bf_count(adb, db, i):
-    back = background_screenshot(adb)
+def bf_count(adb, db, back, i):
     castle_loc_im, bf_loc_im = loc_capture(back, i)
     castle_loc = extract(castle_loc_im)
     bf_loc = extract(bf_loc_im)
