@@ -1,5 +1,6 @@
 import sqlite3
 import pandas as pd
+from datetime import timedelta
 
 class Database:
     def __init__(self):
@@ -52,6 +53,9 @@ class Database:
             left join user b
             on a.user_id = b.id;"""
         df = pd.read_sql_query(query, self.conn)
+        df['datetime'] = pd.to_datetime(df['timestamp'],unit='s')
+        df = df.drop('timestamp', axis=1)
+        df['datetime'] = pd.DatetimeIndex(df['datetime']) + timedelta(hours=9)
         return df
     
     def user_check(self, location):
