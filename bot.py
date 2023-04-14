@@ -82,6 +82,15 @@ def location_check(back, bf_list):
         return -1
     return i
 
+def locate_n_click(adb, figure):
+    back = background_screenshot(adb)
+    temp = auto.locate(figure, Image.fromarray(back), confidence=0.9)
+    if temp is not None:
+        range_click(adb, temp)
+        bias_sleep(0.3,0.1)
+    else:
+        pass
+
 def loc_capture(back, i):
     x,y,w,h = positions[f'loc{i}']
     castle_loc = back[y:y+h,x:x+w]
@@ -112,12 +121,15 @@ def get_nickname(adb, nn):
                     break
             if cc==1:
                 break
-
-    pos = (temp[0]-78, temp[1]-229,20,20)
+        if cc==0:
+            return 'error'
+    pos = (temp[0]-78, temp[1]-229,20,20) ##인포 클릭
     range_click(adb, pos)
     bias_sleep(0.7,0.2)
     back = background_screenshot(adb)
     temp = auto.locate('./src/nick_1200.png', Image.fromarray(back), confidence=0.95)
+    if temp is None:
+        return 'error'
     range_click(adb, tuple(temp))
     bias_sleep(0.5,0.2)
     nickname = clip.paste()
