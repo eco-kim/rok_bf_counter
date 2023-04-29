@@ -62,7 +62,7 @@ class MyApp(QWidget):
 
         self.setWindowTitle('야도측정기')
         self.setWindowIcon(QIcon('./src/BF.png'))
-        self.setGeometry(300, 300, 300, 400)
+        self.setGeometry(300, 300, 300, 300)
         self.show()
 
     def get_adb_port(self):
@@ -77,18 +77,14 @@ class MyApp(QWidget):
 
     def bot_start(self):
         if self.db is None:
-            QMessageBox.information(self, 'error', 'DB 경로를 선택해 주세요')
-            return 0
+            self.db = Database('./')
         if self.adb_port is None:
             QMessageBox.information(self, 'error', 'ADB 포트 번호를 입력해 주세요')
             return 0
         self.adb = adb_device(self.adb_port)
         if self.adb is None:
-            os.system('adb server start')
-            self.adb = adb_device(self.adb_port)
-            if self.adb is None:
-                QMessageBox.information(self, 'error', 'ADB 시작 불가')
-                return 0
+            QMessageBox.information(self, 'error', 'ADB 포트 번호를 확인해 주세요')
+            return 0
         self.bot=1
         #self.wait.exit()
         rally = 0
@@ -136,9 +132,10 @@ class MyApp(QWidget):
         self.bot=0
     
     def db_init(self):
-        db_path = QFileDialog.getSaveFileName(self, 'Save data', "", "db files (*.db) or directory")
-        self.db_path = db_path[0]
-        self.db = Database(self.db_path)
+        db_path = QFileDialog.getExistingDirectory(self, "select directory")
+        if db_path != "":
+            self.db_path = db_path
+            self.db = Database(self.db_path)
 
     def data_extract(self):    
         df = self.db.data_extract()
@@ -157,7 +154,7 @@ class MyApp(QWidget):
         hbox.addStretch(2)
         hbox.addWidget(btn)
         hbox.addStretch(2)
-        return hbox        
+        return hbox
 
 
 if __name__ == '__main__':

@@ -3,3 +3,4 @@ venv/
 database.db
 config.py
 build/
+dist/

@@ -8,9 +8,14 @@ from config import *
 from loc_extract import *
 from PIL import Image
 from PyQt5.QtTest import QTest
+import os
 
 # adb settings
 def adb_device(deviceport):
+    try:
+        os.system('adb server start')
+    except:
+        pass ##adb server가 이미 켜져있는 경우 말고도 실패할 가능성 체크해야함.
     client = AdbClient(host="127.0.0.1", port=5037)
     client.remote_connect("localhost", deviceport)
     adbdevice = client.device("localhost:"+str(deviceport))
@@ -39,6 +44,15 @@ def bias_sleep(low, range0):
 
 def go_to_war_page(adb):
     back = background_screenshot(adb)
+    temp = auto.locate('./src/rally_1200.png', back, confidence=0.9)
+    if temp is not None:
+        range_click(adb, (600,360,20,20))
+
+    temp = auto.locate('./src/x_1200.png', back, confidence=0.9)
+    if temp is not None:
+        print(tuple(temp))
+        range_click(adb, tuple(temp))
+
     temp = auto.locate('./src/aliance_1200.png', back, confidence=0.8)
     if not temp:
         range_click(adb, 'menu')
@@ -100,29 +114,12 @@ def get_nickname(adb, nn):
     back = background_screenshot(adb)
     temp = auto.locate('./src/info_1200.png', Image.fromarray(back), confidence=0.9)
     if not temp:
-        dx = 190
-        dy = 140
-        pos0 = positions['castle']
-        cc = 0
-        for i in [-1,0,1]:
-            for j in [-1,0,1]:
-                pos = (pos0[0]+dx*i, pos0[1]+dy*j, pos0[2], pos0[3])
-                range_click(adb, pos)
-                bias_sleep(0.3,0.2)
-                back = background_screenshot(adb)
-                temp = auto.locate('./src/info_1200.png', Image.fromarray(back), confidence=0.9)
-                if temp is not None:
-                    cc = 1
-                    break
-            if cc==1:
-                break
-        if cc==0:
-            return 'error'
+        return 'error'
     pos = (temp[0]-78, temp[1]-229,20,20) ##인포 클릭
     range_click(adb, pos)
     bias_sleep(0.7,0.2)
     back = background_screenshot(adb)
-    temp = auto.locate('./src/nick_1200.png', Image.fromarray(back), confidence=0.95)
+    temp = auto.locate('./src/nick_1200.png', Image.fromarray(back), confidence=0.9)
     if temp is None:
         return 'error'
     range_click(adb, tuple(temp))

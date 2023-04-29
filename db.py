@@ -4,8 +4,7 @@ from datetime import timedelta
 
 class Database:
     def __init__(self, db_path):
-        if db_path[-3:] != '.db':
-            db_path += 'database.db'
+        db_path += '/database.db'
         self.conn = sqlite3.connect(db_path, isolation_level=None)
         c = self.conn.cursor()
         
