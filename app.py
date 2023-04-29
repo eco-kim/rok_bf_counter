@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QMessageBox
 from PyQt5.QtGui import QIcon
 from PyQt5.QtTest import QTest
 from bot import bf_count, bf_check, go_to_war_page, rallycount, location_check, adb_device, background_screenshot
@@ -10,7 +10,7 @@ class MyApp(QWidget):
     def __init__(self):
         super().__init__()
         self.initUI()
-        self.db = Database()
+        self.db = None
         self.bot = 0
         self.bf_list = []
         self.adb_port = None
@@ -18,6 +18,8 @@ class MyApp(QWidget):
         self.back = None
 
     def initUI(self):        
+        self.db_btn = QPushButton('DB 경로 선택')
+        self.db_btn.pressed.connect(self.db_init)
         self.lbl1 = QLabel('ADB port:')
         self.le_port = QLineEdit()
         self.le_port.textChanged.connect(self.get_adb_port)
@@ -70,9 +72,19 @@ class MyApp(QWidget):
             self.alli_name = alli_name
 
     def bot_start(self):
+        if self.db is None:
+            QMessageBox.information(self, 'error', 'DB 경로를 선택해 주세요')
+            return 0
         if self.adb_port is None:
+            QMessageBox.information(self, 'error', 'ADB 포트 번호를 입력해 주세요')
             return 0
         self.adb = adb_device(self.adb_port)
+        if self.adb is None:
+            os.system('adb server start')
+            self.adb = adb_device(self.adb_port)
+            if self.adb is None:
+                QMessageBox.information(self, 'error', 'ADB 시작 불가')
+                return 0
         self.bot=1
         #self.wait.exit()
         rally = 0
@@ -92,7 +104,7 @@ class MyApp(QWidget):
             
             if rally==0: ##집결이 없었다가 생김, 혹은 처음 켰음
                 nn = rallycount(self.back) #집결 열려있는 것 개수
-                _, bf_loc = bf_count(self.adb, self.db, self.back, nn)
+                _, bf_loc = bf_count(self.adb, self.db, self.back, self.alli_name, nn)
                 self.bf_list.append(bf_loc)
                 rally = 1
             else: ##전에 어디 한번 다녀옴
@@ -109,7 +121,7 @@ class MyApp(QWidget):
                     continue
                 if self.bot==0: #멈춤버튼 누름
                     break
-                _, bf_loc = bf_count(self.adb, self.db, self.back, i)
+                _, bf_loc = bf_count(self.adb, self.db, self.back, self.alli_name, i)
                 self.bf_list.append(bf_loc)
                 rally = 1             
             if len(self.bf_list)>10:
@@ -119,9 +131,14 @@ class MyApp(QWidget):
     def bot_stop(self):
         self.bot=0
     
+    def db_init(self):
+        db_path = QFileDialog.getSaveFileName(self, 'Save data', "", "db files (*.db) or directory")
+        self.db_path = db_path[0]
+        self.db = Database(self.db_path)
+
     def data_extract(self):    
         df = self.db.data_extract()
-        fname = QFileDialog.getSaveFileName(self, 'Save file', "", "excel files files (*.xlsx)")
+        fname = QFileDialog.getSaveFileName(self, 'Save file', "", "excel files (*.xlsx)")
         if fname[0] != "":
             df.to_excel(fname[0]) 
     

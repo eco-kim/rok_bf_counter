@@ -14,11 +14,6 @@ def adb_device(deviceport):
     client = AdbClient(host="127.0.0.1", port=5037)
     client.remote_connect("localhost", deviceport)
     adbdevice = client.device("localhost:"+str(deviceport))
-
-    if adbdevice is not None:
-        print("Adb detected")
-    else:
-        print("Adb not detected")
     return adbdevice
 
 def background_screenshot(adb):
@@ -141,13 +136,13 @@ def integer_timestamp():
     t0 = datetime.now().timestamp()
     return int(t0)
 
-def bf_count(adb, db, back, i):
+def bf_count(adb, db, back, alli, i):
     castle_loc_im, bf_loc_im = loc_capture(back, i)
     castle_loc = extract(castle_loc_im)
     bf_loc = extract(bf_loc_im)
 
     nickname = get_nickname(adb, i)
-    data = {'nickname':nickname, 'location':castle_loc}
+    data = {'nickname':nickname, 'location':castle_loc, 'alliance':alli}
     user_id = db.insert_user(data)
     
     data = {'user_id':user_id, 'bf_loc':bf_loc, 'timestamp':integer_timestamp()}
