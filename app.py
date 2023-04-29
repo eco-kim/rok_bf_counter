@@ -14,12 +14,15 @@ class MyApp(QWidget):
         self.bot = 0
         self.bf_list = []
         self.adb_port = None
+        self.alli_name = ''
         self.back = None
 
     def initUI(self):        
         self.lbl1 = QLabel('ADB port:')
-        self.le = QLineEdit()
-        self.le.textChanged.connect(self.get_adb_port)
+        self.le_port = QLineEdit()
+        self.le_port.textChanged.connect(self.get_adb_port)
+        self.le_alli = QLineEdit()
+        self.le_alli.textChanged.connect(self.get_alli_name)
         self.start_btn = QPushButton('시작')
         self.start_btn.pressed.connect(self.bot_start)
         self.stop_btn = QPushButton('멈춤')
@@ -57,9 +60,14 @@ class MyApp(QWidget):
         self.show()
 
     def get_adb_port(self):
-        port = self.le.text()
+        port = self.le_port.text()
         if port != '':
-            self.adb_port = int(self.le.text())
+            self.adb_port = int(self.le_port.text())
+
+    def get_alli_name(self):
+        alli_name = self.le_alli.text()
+        if alli_name != '':
+            self.alli_name = alli_name
 
     def bot_start(self):
         if self.adb_port is None:
