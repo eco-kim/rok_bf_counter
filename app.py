@@ -23,6 +23,7 @@ class MyApp(QWidget):
         self.lbl1 = QLabel('ADB port:')
         self.le_port = QLineEdit()
         self.le_port.textChanged.connect(self.get_adb_port)
+        self.lbl2 = QLabel('연맹:')        
         self.le_alli = QLineEdit()
         self.le_alli.textChanged.connect(self.get_alli_name)
         self.start_btn = QPushButton('시작')
@@ -37,17 +38,20 @@ class MyApp(QWidget):
         hbox = QHBoxLayout()
         hbox.addStretch(1)
         hbox.addWidget(self.lbl1)
-        hbox.addWidget(self.le)
+        hbox.addWidget(self.le_port)
         hbox.addStretch(2)
 
         hbox2 = QHBoxLayout()
-        hbox2.addStretch(2)
-        hbox2.addWidget(self.start_btn)
+        hbox2.addStretch(1)
+        hbox2.addWidget(self.lbl2)
+        hbox2.addWidget(self.le_alli)
         hbox2.addStretch(2)
 
         vbox = QVBoxLayout()
         vbox.addStretch(1)
         vbox.addLayout(hbox)
+        vbox.addLayout(hbox2)
+        vbox.addLayout(self.btn_layout(self.db_btn))
         vbox.addLayout(self.btn_layout(self.start_btn))
         vbox.addLayout(self.btn_layout(self.stop_btn))
         vbox.addLayout(self.btn_layout(self.data_btn))
@@ -58,7 +62,7 @@ class MyApp(QWidget):
 
         self.setWindowTitle('야도측정기')
         self.setWindowIcon(QIcon('./src/BF.png'))
-        self.setGeometry(300, 300, 300, 200)
+        self.setGeometry(300, 300, 300, 400)
         self.show()
 
     def get_adb_port(self):
