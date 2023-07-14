@@ -44,14 +44,23 @@ def bias_sleep(low, range0):
 
 def go_to_war_page(adb):
     back = background_screenshot(adb)
+
+    ##집결부대 눌러서 부대창설 뜬 경우 탈출
     temp = auto.locate('./src/rally_1200.png', back, confidence=0.9)
     if temp is not None:
-        range_click(adb, (600,360,20,20))
+        range_click(adb, (600,360,20,20)) ##화면 중앙 클릭
 
+    ##뭐든 다른 이상한창 떠있는 경우 탈출
     temp = auto.locate('./src/x_1200.png', back, confidence=0.9)
-    if temp is not None:
-        print(tuple(temp))
+    while temp is not None:  ##X 여러번 눌려야 탈출 될 수 도 있으니까.
         range_click(adb, tuple(temp))
+        back = background_screenshot(adb)
+        temp = auto.locate('./src/x_1200.png', back, confidence=0.9)
+
+    ##성 클릭한 상태로 바보된 경우 탈출
+    temp = auto.locate('./src/info_1200.png', Image.fromarray(back), confidence=0.9)
+    if temp is not None:
+        range_click(adb, (600,45,60,20)) ##화면 상단 클릭
 
     temp = auto.locate('./src/aliance_1200.png', back, confidence=0.8)
     if not temp:
@@ -70,7 +79,7 @@ def bf_check(back):
         return True
 
 def rallycount(back):
-    temp = auto.locateAll('./src/bf_1200.png', Image.fromarray(back), confidence=0.95)
+    temp = auto.locateAll('./src/bf_1200.png', Image.fromarray(back), confidence=0.90)
     if temp is None:
         return 0
     temp = list(temp)
@@ -102,8 +111,8 @@ def locate_n_click(adb, figure):
 
 def loc_capture(back, i):
     x,y,w,h = positions[f'loc{i}']
-    castle_loc = back[y:y+h,x:x+w]
-    bf_loc = back[y:y+h,x+796:x+796+w] ##야도좌표가 성좌표+796에있음, 해상도 바뀔때 확장성떨어짐 나중에 수정
+    castle_loc = back[y-2:y+2+h,x:x+w]
+    bf_loc = back[y-2:y+h+2,x+796:x+796+w] ##야도좌표가 성좌표+796에있음, 해상도 바뀔때 확장성떨어짐 나중에 수정
     return Image.fromarray(castle_loc), Image.fromarray(bf_loc)
 
 def get_nickname(adb, nn):
@@ -115,7 +124,7 @@ def get_nickname(adb, nn):
     temp = auto.locate('./src/info_1200.png', Image.fromarray(back), confidence=0.9)
     if not temp:
         return 'error'
-    pos = (temp[0]-78, temp[1]-229,20,20) ##인포 클릭
+    pos = (temp[0]-78, temp[1]-229,15,15) ##인포 클릭
     range_click(adb, pos)
     bias_sleep(0.7,0.2)
     back = background_screenshot(adb)
@@ -144,5 +153,5 @@ def bf_count(adb, db, back, alli, i):
     
     data = {'user_id':user_id, 'bf_loc':bf_loc, 'timestamp':integer_timestamp()}
     db.insert_rally(data)
-
+    print(data)
     return castle_loc, bf_loc
